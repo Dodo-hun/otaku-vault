@@ -1,0 +1,14 @@
+# Virtuális környezet
+venv/
+env/
+
+# Python cache fájlok
+__pycache__/
+*.pyc
+
+# Adatbázisok
+*.db
+*.sqlite3
+
+# Környezeti változók (titkos kulcsokhoz)
+.env
