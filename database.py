@@ -1,3 +1,4 @@
+import streamlit as st
 from sqlmodel import Field, SQLModel, create_engine, Session, select
 from datetime import datetime
 from typing import Optional
@@ -14,9 +15,8 @@ class Media(SQLModel, table=True):
     new_chapter: str = Field(default="")
     last_updated: datetime = Field(default_factory=datetime.now)
 
-sqlite_file_name = "tracker.db"
-sqlite_url = f"sqlite:///{sqlite_file_name}"
-engine = create_engine(sqlite_url, echo=False)
+cloud_url = st.secrets["DATABASE_URL"]
+engine = create_engine(cloud_url, echo=False)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)

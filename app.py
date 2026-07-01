@@ -64,7 +64,7 @@ def main():
             for media in results:
                 update_total_chapters(media_id=media.id) # Update total chapters based on elapsed time
                 with st.container(border=True):
-                    col1, col2 = st.columns(2)
+                    col1, col2 = st.columns([3,1])
                     with col1:
                         if media.type == "Manga":
                             st.write(f"{media.title}  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, New Chapter on: {media.new_chapter}")

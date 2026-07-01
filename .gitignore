@@ -12,3 +12,5 @@ __pycache__/
 
 # Környezeti változók (titkos kulcsokhoz)
 .env
+
+.streamlit/
