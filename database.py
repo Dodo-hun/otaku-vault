@@ -25,8 +25,9 @@ def create_db_and_tables():
 def add_media(title: str, media_type: str, status: str):
     with Session(engine) as session:
         new_media = Media(title=title, type=media_type, status=status)
-        
-        session.add(new_media)
+        media = session.exec(select(Media).where(Media.title.contains(title))).first()
+        if not media:
+            session.add(new_media)
         session.commit()
 
 def increment_chapter(media_id: int):
@@ -34,6 +35,15 @@ def increment_chapter(media_id: int):
         media = session.get(Media, media_id)
         if media:
             media.read_chapters += 1
+            media.last_updated = datetime.now()
+            session.add(media)
+            session.commit()
+
+def update_total_chapters(media_id: int):
+    with Session(engine) as session:
+        media = session.get(Media, media_id)
+        if media:
+            media.total_chapters += ((datetime.now() - media.last_updated).days % 7)  # Példa: növeljük a total_chapters értékét az eltelt napok számával
             media.last_updated = datetime.now()
             session.add(media)
             session.commit()
