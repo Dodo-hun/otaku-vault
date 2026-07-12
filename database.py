@@ -2,6 +2,7 @@ import streamlit as st
 from sqlmodel import Field, SQLModel, create_engine, Session, select
 from datetime import datetime
 from typing import Optional
+from api_services import *
 
 # Adatbázis séma
 class Media(SQLModel, table=True):
@@ -22,12 +23,31 @@ def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
 # CRUD műveletek
-def add_media(title: str, media_type: str, status: str):
+def add_media(title: str, media_type: str):
     with Session(engine) as session:
-        new_media = Media(title=title, type=media_type, status=status)
+        new_media = Media(title=title, type=media_type)
         media = session.exec(select(Media).where(Media.title.contains(title))).first()
         if not media:
-            session.add(new_media)
+            fetched_data = fetch_media_data(new_media.title, is_manga=(new_media.type == "Manga"))
+            if fetched_data:
+                new_media.total_chapters = fetched_data["total_units"]
+                new_media.status = fetched_data["status"]
+                new_media.last_updated = datetime.now()
+                session.add(new_media)
+        session.commit()
+
+def add_multiple_media(titles: str, media_type: str):
+    with Session(engine) as session:
+        for title in titles.split("."):
+            new_media = Media(title=title, type=media_type)
+            media = session.exec(select(Media).where(Media.title.contains(title))).first()
+            if not media:
+                fetched_data = fetch_media_data(new_media.title, is_manga=(new_media.type == "Manga"))
+                if fetched_data:
+                    new_media.total_chapters = fetched_data["total_units"]
+                    new_media.status = fetched_data["status"]
+                    new_media.last_updated = datetime.now()
+                    session.add(new_media)
         session.commit()
 
 def increment_chapter(media_id: int):
@@ -37,16 +57,19 @@ def increment_chapter(media_id: int):
             media.read_chapters += 1
             media.last_updated = datetime.now()
             session.add(media)
-            session.commit()
+        session.commit()
 
 def update_total_chapters(media_id: int):
     with Session(engine) as session:
         media = session.get(Media, media_id)
         if media:
-            media.total_chapters += ((datetime.now() - media.last_updated).days % 7)  # Példa: növeljük a total_chapters értékét az eltelt napok számával
-            media.last_updated = datetime.now()
-            session.add(media)
-            session.commit()
+            fetched_data = fetch_media_data(media.title, is_manga=(media.type == "Manga"))
+            if fetched_data:
+                media.total_chapters = fetched_data["total_units"]
+                media.status = fetched_data["status"]
+                media.last_updated = datetime.now()
+                session.add(media)
+        session.commit()
 
 def update_media(media_id: int, new_title: str, new_status: str, new_total_chapters: int, new_read_chapters: int, new_chapter: str):
     with Session(engine) as session:

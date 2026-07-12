@@ -30,10 +30,14 @@ def main():
     with st.expander("New Media"):
         title = st.text_input("Title", value=text)
         media_type = st.selectbox("Type", ["Manga", "Anime"])
-        status = st.selectbox("Status", ["Ongoing", "Completed", "On Hold", "Dropped", "Hiatus"])
         if st.button("Add"):
-            add_media(title=title, media_type=media_type, status=status)
-
+            add_media(title=title, media_type=media_type)
+    
+    with st.expander("Multiple Media"):
+        titles = st.text_input("Titles", value=text)
+        medias_type = st.selectbox("Types", ["Manga", "Anime"])
+        if st.button("Add all media"):
+            add_multiple_media(titles=titles, media_type=medias_type)
 
 
     # Adatok lekérdezése és megjelenítése
@@ -48,7 +52,7 @@ def main():
             SearchType = st.selectbox("Filter by type", ["All", "Manga", "Anime"])
             if SearchType != "All":
                 results = [media for media in results if media.type == SearchType]
-            SearchStatus = st.selectbox("Filter by status", ["All", "Ongoing", "Completed", "On Hold", "Dropped", "Hiatus"])
+            SearchStatus = st.selectbox("Filter by status", ["All", "Ongoing", "Releasing", "Completed", "FINISHED", "On Hold", "Cancelled", "Hiatus"])
             if SearchStatus != "All":
                 results = [media for media in results if media.status == SearchStatus]
             SearchOrder = st.selectbox("Order by", ["Norm","ASC", "DESC"])
@@ -61,8 +65,8 @@ def main():
         
         if results:
             st.subheader("Saved media:")
+            st.button("API refresh", on_click=lambda: [update_total_chapters(media_id=media.id) for media in results])
             for media in results:
-                update_total_chapters(media_id=media.id) # Update total chapters based on elapsed time
                 with st.container(border=True):
                     col1, col2 = st.columns([3,1])
                     with col1:
@@ -80,7 +84,7 @@ def main():
                             with col2:
                                 with st.popover("✏️"):
                                     new_t = st.text_input("New name", value=media.title, key=f"title_{media.id}")
-                                    new_s = st.selectbox("Status", ["Ongoing", "Completed", "On Hold", "Dropped", "Hiatus"], key=f"status_{media.id}", index=["Ongoing", "Completed", "On Hold", "Dropped", "Hiatus"].index(media.status))
+                                    new_s = st.selectbox("Status", ["Ongoing", "RELEASING", "Completed", "FINISHED", "On Hold", "CANCELLED", "Hiatus"], key=f"status_{media.id}", index=["Ongoing", "RELEASING", "Completed", "FINISHED", "On Hold", "CANCELLED", "Hiatus"].index(media.status))
                                     new_tch = st.number_input("Total", min_value=0, value=media.total_chapters, key=f"total_{media.id}")
                                     new_cch = st.number_input("Read chapters", min_value=0, value=media.read_chapters, key=f"read_{media.id}")
                                     new_nch = st.text_input("New chapter/episode", value=media.new_chapter, key=f"new_chapter_{media.id}")
