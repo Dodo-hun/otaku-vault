@@ -17,7 +17,7 @@ def install_playwright_deps():
 install_playwright_deps()
 
 types = ["Manga", "Anime"]
-statuses = ["Ongoing", "RELEASING", "Completed", "FINISHED", "On Hold", "CANCELLED", "Hiatus", "UNKNOWN"]
+statuses = ["RELEASING", "FINISHED", "CANCELLED", "HIATUS", "UNKNOWN"]
 
 # 3. Streamlit UI
 async def main():
@@ -74,6 +74,8 @@ async def main():
                 results = session.exec(statement.order_by(Media.title.desc())).all()
             elif SearchOrder == "UNREAD":
                 results = [media for media in results if media.read_chapters < media.total_chapters]
+            elif SearchOrder == "Norm":
+                results = session.exec(statement.order_by(Media.last_updated.asc())).all()
             
                 
             

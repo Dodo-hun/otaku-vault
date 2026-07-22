@@ -1,6 +1,6 @@
 import streamlit as st
 from sqlmodel import Field, SQLModel, create_engine, Session, select
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from api_services import *
 
@@ -26,7 +26,7 @@ def create_db_and_tables():
 async def add_media(title: str, media_type: str):
     with Session(engine) as session:
         new_media = Media(title=title, type=media_type)
-        media = session.exec(select(Media).where(Media.title.contains(title))).first()
+        media = session.exec(select(Media).where(Media.title == title, Media.type == media_type)).first()
         if not media:
             fetched_data = await fetch_media_data(new_media.title, is_manga=(new_media.type == "Manga"))
             if fetched_data:
@@ -54,10 +54,10 @@ def increment_chapter(media_id: int):
 async def update_total_chapters(media_id: int):
     with Session(engine) as session:
         media = session.get(Media, media_id)
-        if media:
+        if media and media.last_updated < datetime.now() - timedelta(days=3):
             fetched_data = await fetch_media_data(media.title, is_manga=(media.type == "Manga"))
             if fetched_data:
-                media.total_chapters = fetched_data["total_units"] if fetched_data["total_units"] > 0 else media.total_chapters
+                media.total_chapters = fetched_data["total_units"]
                 media.status = fetched_data["status"]
                 media.last_updated = datetime.now()
                 session.add(media)
