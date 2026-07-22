@@ -37,18 +37,10 @@ async def add_media(title: str, media_type: str):
         session.commit()
 
 async def add_multiple_media(titles: str, media_type: str):
-    with Session(engine) as session:
-        for title in titles.split("."):
-            new_media = Media(title=title, type=media_type)
-            media = session.exec(select(Media).where(Media.title.contains(title))).first()
-            if not media:
-                fetched_data = await fetch_media_data(new_media.title, is_manga=(new_media.type == "Manga"))
-                if fetched_data:
-                    new_media.total_chapters = fetched_data["total_units"]
-                    new_media.status = fetched_data["status"]
-                    new_media.last_updated = datetime.now()
-                    session.add(new_media)
-        session.commit()
+    for title in titles.split("."):
+        title = title.strip()
+        if title:
+            await add_media(title=title, media_type=media_type)
 
 def increment_chapter(media_id: int):
     with Session(engine) as session:
