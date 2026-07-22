@@ -1,3 +1,4 @@
+import asyncio
 import streamlit as st
 from sqlmodel import Field, SQLModel, create_engine, Session, select
 import requests
@@ -7,8 +8,11 @@ from database import *
 from PIL import Image
 import pytesseract
 
+types = ["Manga", "Anime"]
+statuses = ["Ongoing", "RELEASING", "Completed", "FINISHED", "On Hold", "CANCELLED", "Hiatus", "UNKNOWN"]
+
 # 3. Streamlit UI
-def main():
+async def main():
     st.set_page_config(page_title="Otaku Log", page_icon="📚", layout="centered")
     st.title("Manga & Anime Tracker")
 
@@ -29,15 +33,15 @@ def main():
     # Teszt adat hozzáadása UI (Később ezt lecseréljük rendes formra)
     with st.expander("New Media"):
         title = st.text_input("Title", value=text)
-        media_type = st.selectbox("Type", ["Manga", "Anime"])
+        media_type = st.selectbox("Type", types)
         if st.button("Add"):
-            add_media(title=title, media_type=media_type)
+            await add_media(title=title, media_type=media_type)
     
     with st.expander("Multiple Media"):
         titles = st.text_input("Titles", value=text)
-        medias_type = st.selectbox("Types", ["Manga", "Anime"])
+        medias_type = st.selectbox("Types", types)
         if st.button("Add all media"):
-            add_multiple_media(titles=titles, media_type=medias_type)
+            await add_multiple_media(titles=titles, media_type=medias_type)
 
 
     # Adatok lekérdezése és megjelenítése
@@ -49,23 +53,26 @@ def main():
             Search = st.text_input("Search by title")
             if Search:
                 results = [media for media in results if Search.lower() in media.title.lower()]
-            SearchType = st.selectbox("Filter by type", ["All", "Manga", "Anime"])
+            SearchType = st.selectbox("Filter by type", ["All"] + types)
             if SearchType != "All":
                 results = [media for media in results if media.type == SearchType]
-            SearchStatus = st.selectbox("Filter by status", ["All", "Ongoing", "Releasing", "Completed", "FINISHED", "On Hold", "Cancelled", "Hiatus"])
+            SearchStatus = st.selectbox("Filter by status", ["All"] + statuses)
             if SearchStatus != "All":
                 results = [media for media in results if media.status == SearchStatus]
-            SearchOrder = st.selectbox("Order by", ["Norm","ASC", "DESC"])
+            SearchOrder = st.selectbox("Order by", ["Norm","ASC", "DESC", "UNREAD"])
             if SearchOrder == "ASC":
                 results = session.exec(statement.order_by(Media.title.asc())).all()
             elif SearchOrder == "DESC":
                 results = session.exec(statement.order_by(Media.title.desc())).all()
+            elif SearchOrder == "UNREAD":
+                results = [media for media in results if media.read_chapters < media.total_chapters]
+            
                 
             
         
         if results:
             st.subheader("Saved media:")
-            st.button("API refresh", on_click=lambda: [update_total_chapters(media_id=media.id) for media in results])
+            st.button("API refresh", on_click=lambda: [asyncio.run(update_total_chapters(media_id=media.id)) for media in results])
             for media in results:
                 with st.container(border=True):
                     col1, col2 = st.columns([3,1])
@@ -84,7 +91,7 @@ def main():
                             with col2:
                                 with st.popover("✏️"):
                                     new_t = st.text_input("New name", value=media.title, key=f"title_{media.id}")
-                                    new_s = st.selectbox("Status", ["Ongoing", "RELEASING", "Completed", "FINISHED", "On Hold", "CANCELLED", "Hiatus"], key=f"status_{media.id}", index=["Ongoing", "RELEASING", "Completed", "FINISHED", "On Hold", "CANCELLED", "Hiatus"].index(media.status))
+                                    new_s = st.selectbox("Status", statuses, key=f"status_{media.id}", index=statuses.index(media.status))
                                     new_tch = st.number_input("Total", min_value=0, value=media.total_chapters, key=f"total_{media.id}")
                                     new_cch = st.number_input("Read chapters", min_value=0, value=media.read_chapters, key=f"read_{media.id}")
                                     new_nch = st.text_input("New chapter/episode", value=media.new_chapter, key=f"new_chapter_{media.id}")
@@ -98,5 +105,4 @@ def main():
         else:
             st.write("Not found.")
 
-if __name__ == "__main__":
-    main()
+asyncio.run(main())

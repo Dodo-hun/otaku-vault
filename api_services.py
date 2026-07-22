@@ -1,12 +1,15 @@
-import requests
+from curl_cffi import requests
 import json
 import urllib.parse
 from typing import Optional, Dict, Any
 from bs4 import BeautifulSoup
+from playwright.async_api import async_playwright
+from playwright_stealth import Stealth
+import json
 
 ANILIST_API_URL = "https://graphql.anilist.co"
 
-def fetch_media_data(search_title: str, is_manga: bool = True) -> Optional[Dict[int, Any]]:
+async def fetch_media_data(search_title: str, is_manga: bool = True) -> Optional[Dict[int, Any]]:
     # GraphQL lekérdezés felépítése
     query = """
     query ($search: String, $type: MediaType) {
@@ -43,7 +46,7 @@ def fetch_media_data(search_title: str, is_manga: bool = True) -> Optional[Dict[
             return None
             
         # Adatok normalizálása a Streamlit/SQLModel rendszer számára
-        total_units = auto_fetch_comix_chapter(search_title) if is_manga else media["episodes"]
+        total_units = await auto_fetch_comix_chapter(search_title) if is_manga else media["episodes"]
         
         return {
             "total_units": total_units or 0,
@@ -51,55 +54,55 @@ def fetch_media_data(search_title: str, is_manga: bool = True) -> Optional[Dict[
         }
         
     except requests.exceptions.RequestException:
-        return None
+        return {
+                "total_units": await auto_fetch_comix_chapter(search_title) if is_manga else None,
+                "status": "UNKNOWN"
+                }
 
-def auto_fetch_comix_chapter(title: str) -> Optional[int]:
+async def auto_fetch_comix_chapter(title: str) -> Optional[int]:
     # 1. A cím URL-baráttá tétele (pl. "Mad Dog" -> "Mad+Dog")
     safe_title = urllib.parse.quote_plus(title)
     
     # A Comix.to hivatalos kereső URL-je
     search_url = f"https://comix.to/browse?q={safe_title}&sort=relevance%3Adesc"
     
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
-    }
-    
-    try:
-        # 2. Rákeresünk a mangára a weboldalon
-        response = requests.get(search_url, headers=headers, timeout=10)
-        response.raise_for_status()
+    async with Stealth().use_async(async_playwright()) as p:
+        # Chromium elindítása láthatatlan (headless) módban
+        browser = await p.chromium.launch(headless=True)
+        page = await browser.new_page()
+
+        webdriver_status = await page.evaluate("navigator.webdriver")
         
-        # 3. Kikeressük az initial-data JSON blokkot a letöltött HTML-ből
-        soup = BeautifulSoup(response.text, 'html.parser')
-        script_tag = soup.find('script', id='initial-data')
-        
-        if script_tag and script_tag.string:
-            data = json.loads(script_tag.string)
-            queries = data.get("queries", {})
+        try:
+            await page.goto(search_url)
+            await page.wait_for_selector('.lrow__poster', timeout=10000)
+            soup_browse = BeautifulSoup(await page.content(), 'html.parser')
+            link_element = soup_browse.find('a', class_='lrow__poster')
             
-            print(safe_title, script_tag)
+            if not link_element:
+                print("Nem található manga ezzel a címmel.")
+                return 0
+                
+            href = link_element.get('href')
+            manga_url = f"https://comix.to{href}"
             
-            # 4. Végigpásztázzuk a JSON objektumokat a találatokért
-            for key, value_obj in queries.items():
-                
-                print(key, value_obj)
-                
-                # A keresési eredmények mindig egy "items" listában jönnek vissza
-                if isinstance(value_obj, dict) and "items" in value_obj:
-                    items = value_obj["items"]
-                    
-                    if isinstance(items, list) and len(items) > 0:
-                        # Vesszük a legelső (legrelevánsabb) találatot
-                        first_result = items[0]
-                        
-                        print(f"{first_result}, {first_result["latestChapter"]}")
-                        # 5. Ellenőrizzük, hogy ez tényleg manga adat-e, és megvan-e a latestChapter
-                        if "latestChapter" in first_result and "title" in first_result:
-                            # A float() azért kell, mert néha tizedestörttel (pl. 14.5) jön a fejezet, amit egésszé alakítunk
-                            return int(float(first_result["latestChapter"]))
-                            
-        return 0
+            await page.goto(manga_url)
+            
+            soup_manga = BeautifulSoup(await page.content(), 'html.parser')
+            script_tag = soup_manga.find('script', id='initial-data')
         
-    except Exception as e:
-        print(f"Hiba a Comix keresés során: {e}")
-        return None
+            if script_tag and script_tag.string:
+                data = json.loads(script_tag.string)
+                queries = data.get("queries", {})
+                
+                for key, value_obj in queries.items():
+                    if isinstance(value_obj, dict) and "latestChapter" in value_obj:
+                        return int(float(value_obj["latestChapter"]))
+            return 0
+
+        except Exception as e:
+            print(f"Hiba a Comix keresés során: {e}")
+            return 0
+        finally:
+            await browser.close()
+    return 0

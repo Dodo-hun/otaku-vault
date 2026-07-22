@@ -23,12 +23,12 @@ def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
 # CRUD műveletek
-def add_media(title: str, media_type: str):
+async def add_media(title: str, media_type: str):
     with Session(engine) as session:
         new_media = Media(title=title, type=media_type)
         media = session.exec(select(Media).where(Media.title.contains(title))).first()
         if not media:
-            fetched_data = fetch_media_data(new_media.title, is_manga=(new_media.type == "Manga"))
+            fetched_data = await fetch_media_data(new_media.title, is_manga=(new_media.type == "Manga"))
             if fetched_data:
                 new_media.total_chapters = fetched_data["total_units"]
                 new_media.status = fetched_data["status"]
@@ -36,13 +36,13 @@ def add_media(title: str, media_type: str):
                 session.add(new_media)
         session.commit()
 
-def add_multiple_media(titles: str, media_type: str):
+async def add_multiple_media(titles: str, media_type: str):
     with Session(engine) as session:
         for title in titles.split("."):
             new_media = Media(title=title, type=media_type)
             media = session.exec(select(Media).where(Media.title.contains(title))).first()
             if not media:
-                fetched_data = fetch_media_data(new_media.title, is_manga=(new_media.type == "Manga"))
+                fetched_data = await fetch_media_data(new_media.title, is_manga=(new_media.type == "Manga"))
                 if fetched_data:
                     new_media.total_chapters = fetched_data["total_units"]
                     new_media.status = fetched_data["status"]
@@ -59,13 +59,13 @@ def increment_chapter(media_id: int):
             session.add(media)
         session.commit()
 
-def update_total_chapters(media_id: int):
+async def update_total_chapters(media_id: int):
     with Session(engine) as session:
         media = session.get(Media, media_id)
         if media:
-            fetched_data = fetch_media_data(media.title, is_manga=(media.type == "Manga"))
+            fetched_data = await fetch_media_data(media.title, is_manga=(media.type == "Manga"))
             if fetched_data:
-                media.total_chapters = fetched_data["total_units"]
+                media.total_chapters = fetched_data["total_units"] if fetched_data["total_units"] > 0 else media.total_chapters
                 media.status = fetched_data["status"]
                 media.last_updated = datetime.now()
                 session.add(media)
