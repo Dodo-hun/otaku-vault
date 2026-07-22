@@ -1,2 +1,9 @@
 tesseract-ocr
 tesseract-ocr-hun
+libnss3
+libatk-bridge2.0-0
+libxcomposite1
+libxrandr2
+libgbm1
+libasound2
+libxshmfence1

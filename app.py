@@ -7,6 +7,14 @@ from typing import Optional
 from database import *
 from PIL import Image
 import pytesseract
+import subprocess
+
+@st.cache_resource(show_spinner=False)
+def install_playwright_deps():
+    subprocess.run(["playwright", "install", "chromium"])
+
+# Ez a hívás garantálja, hogy a böngésző letöltődik az első futtatáskor
+install_playwright_deps()
 
 types = ["Manga", "Anime"]
 statuses = ["Ongoing", "RELEASING", "Completed", "FINISHED", "On Hold", "CANCELLED", "Hiatus", "UNKNOWN"]
