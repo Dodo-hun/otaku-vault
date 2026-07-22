@@ -9,4 +9,3 @@ libasound2
 libxshmfence1
 libxdamage1
 libxfixes3
-libxkbcommon
