@@ -141,11 +141,24 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
         detail_resp.raise_for_status()
         detail_data = detail_resp.json()
         
+        is_this_it = False
+        
+        alt_titles = detail_data.get("associated", [])
+        alt_titles.append({"title": detail_data.get("title", "")})
+        #print(f"Alt titles: {alt_titles}")
+        for alt in alt_titles:
+            alt_title = alt.get("title", "")
+            if alt_title.lower() == title.lower():
+                is_this_it = True
+            
+        if not is_this_it:
+            return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+        
         status = str(detail_data.get("status", "UNKNOWN")).upper()
-        if "ONGOING" in status:
-            status = "ONGOING"
-        elif "COMPLETE" in status:
+        if "COMPLETE" in status:
             status = "COMPLETE"
+        elif "ONGOING" in status:
+            status = "ONGOING"
         elif "HIATUS" in status:
             status = "HIATUS"
         elif "CANCELLED" in status:
@@ -160,6 +173,7 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
         return {
             "total_units": chapters,
             "status": status,
+            #"url": detail_url
             "url": f"https://comix.to/browse?q={urllib.parse.quote_plus(title)}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"
         }
     except Exception as e:
