@@ -15,8 +15,9 @@ class Media(SQLModel, table=True):
     status: str = Field(default="Ongoing")  # Alapértelmezett státusz
     new_chapter: str = Field(default="")
     last_updated: datetime = Field(default_factory=datetime.now)
+    url: str = Field(default="")  # Új mező az URL tárolására
 
-cloud_url = st.secrets["DATABASE_URL"]
+cloud_url = st.secrets["DATABASE_URL"] # change this to your own database URL
 engine = create_engine(cloud_url, echo=False)
 
 def create_db_and_tables():
@@ -32,6 +33,7 @@ async def add_media(title: str, media_type: str):
             if fetched_data:
                 new_media.total_chapters = fetched_data["total_units"]
                 new_media.status = fetched_data["status"]
+                new_media.url = fetched_data["url"]
                 new_media.last_updated = datetime.now()
                 session.add(new_media)
         session.commit()
@@ -54,13 +56,13 @@ def increment_chapter(media_id: int):
 async def update_total_chapters(media_id: int):
     with Session(engine) as session:
         media = session.get(Media, media_id)
-        if media and media.last_updated < datetime.now() - timedelta(days=3):
-            fetched_data = await fetch_media_data(media.title, is_manga=(media.type == "Manga"))
-            if fetched_data:
-                media.total_chapters = fetched_data["total_units"]
-                media.status = fetched_data["status"]
-                media.last_updated = datetime.now()
-                session.add(media)
+        fetched_data = await fetch_media_data(media.title, is_manga=(media.type == "Manga"))
+        if fetched_data:
+            media.total_chapters = fetched_data["total_units"]
+            media.status = fetched_data["status"]
+            media.url = fetched_data["url"]
+            media.last_updated = datetime.now()
+            session.add(media)
         session.commit()
 
 def update_media(media_id: int, new_title: str, new_status: str, new_total_chapters: int, new_read_chapters: int, new_chapter: str):

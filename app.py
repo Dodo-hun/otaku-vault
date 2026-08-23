@@ -17,7 +17,7 @@ def install_playwright_deps():
 install_playwright_deps()
 
 types = ["Manga", "Anime"]
-statuses = ["RELEASING", "FINISHED", "CANCELLED", "HIATUS", "UNKNOWN"]
+statuses = ["RELEASING", "ONGOING", "FINISHED", "COMPLETE", "CANCELLED", "HIATUS", "UNKNOWN", "DISCONTINUED", "DROPPED"]
 
 # 3. Streamlit UI
 async def main():
@@ -59,8 +59,7 @@ async def main():
         
         with st.expander("Search & Filter"):
             Search = st.text_input("Search by title")
-            if Search:
-                results = [media for media in results if Search.lower() in media.title.lower()]
+            results = [media for media in results if Search.lower() in media.title.lower()]
             SearchType = st.selectbox("Filter by type", ["All"] + types)
             if SearchType != "All":
                 results = [media for media in results if media.type == SearchType]
@@ -74,8 +73,8 @@ async def main():
                 results = session.exec(statement.order_by(Media.title.desc())).all()
             elif SearchOrder == "UNREAD":
                 results = [media for media in results if media.read_chapters < media.total_chapters]
-            elif SearchOrder == "Norm":
-                results = session.exec(statement.order_by(Media.last_updated.asc())).all()
+            #elif SearchOrder == "Norm":
+            #    results = session.exec(statement.order_by(Media.last_updated.asc())).all()
             
                 
             
@@ -88,9 +87,10 @@ async def main():
                     col1, col2 = st.columns([3,1])
                     with col1:
                         if media.type == "Manga":
-                            st.write(f"{media.title}  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, New Chapter on: {media.new_chapter}")
+                            
+                            st.write(f"**[{media.title}]({media.url})**  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, New Chapter on: {media.new_chapter}")
                         else:
-                            st.write(f"{media.title}  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, New Episode on: {media.new_chapter}")
+                            st.write(f"**[{media.title}]({media.url})**  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, New Episode on: {media.new_chapter}")
                     with col2:
                         with st.container():
                             col1, col2, col3 = st.columns(3)
@@ -102,7 +102,7 @@ async def main():
                                 with st.popover("✏️"):
                                     new_t = st.text_input("New name", value=media.title, key=f"title_{media.id}")
                                     new_s = st.selectbox("Status", statuses, key=f"status_{media.id}", index=statuses.index(media.status))
-                                    new_tch = st.number_input("Total", min_value=0, value=media.total_chapters, key=f"total_{media.id}")
+                                    new_tch = st.number_input("Total", min_value=-1, value=media.total_chapters, key=f"total_{media.id}")
                                     new_cch = st.number_input("Read chapters", min_value=0, value=media.read_chapters, key=f"read_{media.id}")
                                     new_nch = st.text_input("New chapter/episode", value=media.new_chapter, key=f"new_chapter_{media.id}")
                                     if st.button("Save", key=f"upd_{media.id}"):

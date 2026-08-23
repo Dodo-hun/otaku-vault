@@ -6,12 +6,16 @@ from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 from playwright_stealth import Stealth
 import json
+import re
 
 ANILIST_API_URL = "https://graphql.anilist.co"
 
 async def fetch_media_data(search_title: str, is_manga: bool = True) -> Dict[int, Any]:
     if is_manga:
-        return await auto_fetch_comix_chapter(search_title)
+        #try:
+        #    return await auto_fetch_comix_chapter(search_title)
+        #except Exception:
+        return await auto_fetch_mangaupdates(search_title)
     else:
         # GraphQL lekérdezés felépítése
         query = """
@@ -45,17 +49,19 @@ async def fetch_media_data(search_title: str, is_manga: bool = True) -> Dict[int
 
             media = data.get("data", {}).get("Media")
             if not media:
-                return {"total_units": -1, "status": "UNKNOWN"}
+                return {"total_units": -1, "status": "UNKNOWN", "url": ""}
 
             return {
                 "total_units": media.get("episodes") or 0,
-                "status": media["status"]
+                "status": media["status"],
+                "url": f"https://www.google.com/search?q={urllib.parse.quote_plus(search_title)}"
             }
 
         except requests.exceptions.RequestException:
             return {
                     "total_units": -1,
-                    "status": "UNKNOWN"
+                    "status": "UNKNOWN",
+                    "url": ""
                     }
 
 async def auto_fetch_comix_chapter(title: str) -> dict[int, Any]:
@@ -72,13 +78,13 @@ async def auto_fetch_comix_chapter(title: str) -> dict[int, Any]:
         
         try:
             await page.goto(search_url)
-            await page.wait_for_selector('.lrow__poster', timeout=10000)
+            await page.wait_for_selector('.lrow__poster', timeout=10)
             soup_browse = BeautifulSoup(await page.content(), 'html.parser')
             link_element = soup_browse.find('a', class_='lrow__poster')
             
             if not link_element:
                 print("Nem található manga ezzel a címmel.")
-                return {"total_units": -1, "status": "UNKNOWN"}
+                return {"total_units": -1, "status": "UNKNOWN", "url": ""}
                 
             href = link_element.get('href')
             manga_url = f"https://comix.to{href}"
@@ -98,12 +104,67 @@ async def auto_fetch_comix_chapter(title: str) -> dict[int, Any]:
                         if latest_chapter is not None:
                             chapters = int(float(latest_chapter))
                             status = str(value_obj.get("status", "UNKNOWN")).upper()
-                        return {"total_units": chapters, "status": status}
-            return {"total_units": -1, "status": "UNKNOWN"}
+                        return {"total_units": chapters, "status": status, "url": manga_url}
+            return {"total_units": -1, "status": "UNKNOWN", "url": ""}
 
         except Exception as e:
-            print(f"Hiba a Comix keresés során: {e}")
-            return {"total_units": -1, "status": "UNKNOWN"}
+            raise e
         finally:
             await browser.close()
-    return {"total_units": -1, "status": "UNKNOWN"}
+    return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+
+async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
+    try:
+        series_id = None
+        
+        search_url = "https://api.mangaupdates.com/v1/series/search"
+        search_payload = {"search": title, "perpage": 2}
+        search_resp = requests.post(search_url, json=search_payload, timeout=10)
+        search_resp.raise_for_status()
+            
+        results = search_resp.json().get("results", [])
+        if not results:
+            return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+        
+        for result in results:
+            record = result.get("record", {})
+            type = record.get("type","").lower()
+            if type != "novel":
+                series_id = result.get("record", {}).get("series_id")
+                break
+        
+        if not series_id:
+            return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+        
+        detail_url = f"https://api.mangaupdates.com/v1/series/{series_id}"
+        detail_resp = requests.get(detail_url, timeout=10)
+        detail_resp.raise_for_status()
+        detail_data = detail_resp.json()
+        
+        status = str(detail_data.get("status", "UNKNOWN")).upper()
+        if "ONGOING" in status:
+            status = "ONGOING"
+        elif "COMPLETE" in status:
+            status = "COMPLETE"
+        elif "HIATUS" in status:
+            status = "HIATUS"
+        elif "CANCELLED" in status:
+            status = "CANCELLED"
+        elif "DISCONTINUED" in status:
+            status = "DISCONTINUED"
+        elif "DROPPED" in status:
+            status = "DROPPED"
+        
+        chapters = detail_data.get("latest_chapter",-1)
+        
+        return {
+            "total_units": chapters,
+            "status": status,
+            "url": f"https://comix.to/browse?q={urllib.parse.quote_plus(title)}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"
+        }
+    except Exception as e:
+        print(f"Hiba a MangaUpdates API lekérésekor: {e}")
+        return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+    return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+
+    
