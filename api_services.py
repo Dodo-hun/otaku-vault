@@ -49,7 +49,7 @@ async def fetch_media_data(search_title: str, is_manga: bool = True) -> Dict[int
 
             media = data.get("data", {}).get("Media")
             if not media:
-                return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+                return {"total_units": -1, "status": "UNKNOWN", "url": f"https://www.google.com/search?q={urllib.parse.quote_plus(search_title)}"}
 
             return {
                 "total_units": media.get("episodes") or 0,
@@ -61,7 +61,7 @@ async def fetch_media_data(search_title: str, is_manga: bool = True) -> Dict[int
             return {
                     "total_units": -1,
                     "status": "UNKNOWN",
-                    "url": ""
+                    "url": f"https://www.google.com/search?q={urllib.parse.quote_plus(search_title)}"
                     }
 
 async def auto_fetch_comix_chapter(title: str) -> dict[int, Any]:
@@ -124,7 +124,7 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
             
         results = search_resp.json().get("results", [])
         if not results:
-            return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+            return {"total_units": -1, "status": "UNKNOWN", "url": f"https://comix.to/browse?q={urllib.parse.quote_plus(title)}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"}
         
         for result in results:
             record = result.get("record", {})
@@ -134,12 +134,13 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
                 break
         
         if not series_id:
-            return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+            return {"total_units": -1, "status": "UNKNOWN", "url": f"https://comix.to/browse?q={urllib.parse.quote_plus(title)}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"}
         
         detail_url = f"https://api.mangaupdates.com/v1/series/{series_id}"
         detail_resp = requests.get(detail_url, timeout=10)
         detail_resp.raise_for_status()
         detail_data = detail_resp.json()
+        #print(detail_data)
         
         is_this_it = False
         
@@ -152,7 +153,7 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
                 is_this_it = True
             
         if not is_this_it:
-            return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+            return {"total_units": -1, "status": "UNKNOWN", "url": f"https://comix.to/browse?q={urllib.parse.quote_plus(title)}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"}
         
         status = str(detail_data.get("status", "UNKNOWN")).upper()
         if "COMPLETE" in status:
@@ -168,8 +169,14 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
         elif "DROPPED" in status:
             status = "DROPPED"
         
-        chapters = detail_data.get("latest_chapter",-1)
         
+        chapters = detail_data.get("latest_chapter",-1)
+        try:
+            ch_from_status = int(str(detail_data.get("status", "0")).split()[0])
+            if chapters < ch_from_status:
+                chapters = ch_from_status
+        except:
+            pass
         return {
             "total_units": chapters,
             "status": status,
@@ -178,7 +185,6 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
         }
     except Exception as e:
         print(f"Hiba a MangaUpdates API lekérésekor: {e}")
-        return {"total_units": -1, "status": "UNKNOWN", "url": ""}
-    return {"total_units": -1, "status": "UNKNOWN", "url": ""}
+        return {"total_units": -1, "status": "UNKNOWN", "url": f"https://comix.to/browse?q={urllib.parse.quote_plus(title)}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"}
 
     

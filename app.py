@@ -58,6 +58,15 @@ async def main():
         results = session.exec(statement).all()
         
         with st.expander("Search & Filter"):
+            SearchOrder = st.selectbox("Order by", ["Norm","ASC", "DESC", "UNREAD"])
+            if SearchOrder == "Norm":
+                results = session.exec(statement.order_by(Media.last_updated.desc())).all()
+            elif SearchOrder == "ASC":
+                results = session.exec(statement.order_by(Media.title.asc())).all()
+            elif SearchOrder == "DESC":
+                results = session.exec(statement.order_by(Media.title.desc())).all()
+            elif SearchOrder == "UNREAD":
+                results = [media for media in results if media.read_chapters < media.total_chapters]
             Search = st.text_input("Search by title")
             results = [media for media in results if Search.lower() in media.title.lower()]
             SearchType = st.selectbox("Filter by type", ["All"] + types)
@@ -66,15 +75,6 @@ async def main():
             SearchStatus = st.selectbox("Filter by status", ["All"] + statuses)
             if SearchStatus != "All":
                 results = [media for media in results if media.status == SearchStatus]
-            SearchOrder = st.selectbox("Order by", ["Norm","ASC", "DESC", "UNREAD"])
-            if SearchOrder == "ASC":
-                results = session.exec(statement.order_by(Media.title.asc())).all()
-            elif SearchOrder == "DESC":
-                results = session.exec(statement.order_by(Media.title.desc())).all()
-            elif SearchOrder == "UNREAD":
-                results = [media for media in results if media.read_chapters < media.total_chapters]
-            #elif SearchOrder == "Norm":
-            #    results = session.exec(statement.order_by(Media.last_updated.asc())).all()
             
                 
             
@@ -87,10 +87,9 @@ async def main():
                     col1, col2 = st.columns([3,1])
                     with col1:
                         if media.type == "Manga":
-                            
-                            st.write(f"**[{media.title}]({media.url})**  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, New Chapter on: {media.new_chapter}")
+                            st.write(f"**[{media.title}]({media.url})**  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, Plusz info: {media.plusz_info}")
                         else:
-                            st.write(f"**[{media.title}]({media.url})**  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, New Episode on: {media.new_chapter}")
+                            st.write(f"**[{media.title}]({media.url})**  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, Plusz info: {media.plusz_info}")
                     with col2:
                         with st.container():
                             col1, col2, col3 = st.columns(3)
@@ -102,11 +101,12 @@ async def main():
                                 with st.popover("✏️"):
                                     new_t = st.text_input("New name", value=media.title, key=f"title_{media.id}")
                                     new_s = st.selectbox("Status", statuses, key=f"status_{media.id}", index=statuses.index(media.status))
-                                    new_tch = st.number_input("Total", min_value=-1, value=media.total_chapters, key=f"total_{media.id}")
-                                    new_cch = st.number_input("Read chapters", min_value=0, value=media.read_chapters, key=f"read_{media.id}")
-                                    new_nch = st.text_input("New chapter/episode", value=media.new_chapter, key=f"new_chapter_{media.id}")
+                                    new_tch = st.number_input("Total chapters" if media.type == "Manga" else "Total episodes", min_value=-1, value=media.total_chapters, key=f"total_{media.id}")
+                                    new_cch = st.number_input("Read chapters" if media.type == "Manga" else "Watched episodes", min_value=0, value=media.read_chapters, key=f"read_{media.id}")
+                                    new_pi = st.text_input("Plusz info", value=media.plusz_info, key=f"plusz_info_{media.id}")
+                                    new_mc = st.checkbox("Manual change", value=media.manual_change, key=f"manual_{media.id}")
                                     if st.button("Save", key=f"upd_{media.id}"):
-                                        update_media(media.id, new_t, new_s, new_tch, new_cch, new_nch)
+                                        update_media(media.id, new_t, new_s, new_tch, new_cch, new_pi, new_mc)
                                         st.rerun()
                             with col3:
                                 if st.button("🗑️", key=f"delete_{media.id}"):

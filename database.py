@@ -13,9 +13,10 @@ class Media(SQLModel, table=True):
     read_chapters: int = Field(default=0)
     total_chapters: int = Field(default=0)
     status: str = Field(default="Ongoing")  # Alapértelmezett státusz
-    new_chapter: str = Field(default="")
+    plusz_info: str = Field(default="")
     last_updated: datetime = Field(default_factory=datetime.now)
     url: str = Field(default="")  # Új mező az URL tárolására
+    manual_change: bool = Field(default=False)
 
 cloud_url = st.secrets["DATABASE_URL"] # change this to your own database URL
 engine = create_engine(cloud_url, echo=False)
@@ -57,7 +58,7 @@ async def update_total_chapters(media_id: int):
     with Session(engine) as session:
         media = session.get(Media, media_id)
         fetched_data = await fetch_media_data(media.title, is_manga=(media.type == "Manga"))
-        if fetched_data:
+        if fetched_data and not media.manual_change and media.status != "COMPLETE" and media.status != "FINISHED":
             media.total_chapters = fetched_data["total_units"]
             media.status = fetched_data["status"]
             media.url = fetched_data["url"]
@@ -65,7 +66,7 @@ async def update_total_chapters(media_id: int):
             session.add(media)
         session.commit()
 
-def update_media(media_id: int, new_title: str, new_status: str, new_total_chapters: int, new_read_chapters: int, new_chapter: str):
+def update_media(media_id: int, new_title: str, new_status: str, new_total_chapters: int, new_read_chapters: int, plusz_info: str, new_manual_change: bool):
     with Session(engine) as session:
         media = session.get(Media, media_id)
         if media:
@@ -73,7 +74,8 @@ def update_media(media_id: int, new_title: str, new_status: str, new_total_chapt
             media.status = new_status
             media.total_chapters = new_total_chapters
             media.read_chapters = new_read_chapters
-            media.new_chapter = new_chapter
+            media.plusz_info = plusz_info
+            media.manual_change = new_manual_change
             media.last_updated = datetime.now()
             session.add(media)
             session.commit()
