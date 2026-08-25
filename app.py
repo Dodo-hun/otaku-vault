@@ -40,17 +40,28 @@ async def main():
 
     # Teszt adat hozzáadása UI (Később ezt lecseréljük rendes formra)
     with st.expander("New Media"):
-        title = st.text_input("Title", value=text)
-        media_type = st.selectbox("Type", types)
+        stitle = st.text_input("Title", value=text)
+        smedia_type = st.selectbox("Type", types)
         if st.button("Add"):
-            await add_media(title=title, media_type=media_type)
-    
+            try:
+                await add_media(title=stitle, media_type=smedia_type)
+                st.success(f"Added **{stitle}** as **{smedia_type}**.")
+            except ValueError as e:
+                st.error(f"Media with title **{stitle}** and type **{smedia_type}** already exists.")
+                
+    dialog = False
     with st.expander("Multiple Media"):
         titles = st.text_input("Titles", value=text)
         medias_type = st.selectbox("Types", types)
         if st.button("Add all media"):
-            await add_multiple_media(titles=titles, media_type=medias_type)
-
+            for title in titles.split("."):
+                    title = title.strip()
+                    if title and not dialog:
+                        try:
+                            await add_media(title=title, media_type=medias_type)
+                            st.success(f"Added **{title}** as **{medias_type}**.")
+                        except ValueError as e:
+                            st.error(f"Media with title **{title}** and type **{medias_type}** already exists.")
 
     # Adatok lekérdezése és megjelenítése
     with Session(engine) as session:

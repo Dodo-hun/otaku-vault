@@ -37,13 +37,9 @@ async def add_media(title: str, media_type: str):
                 new_media.url = fetched_data["url"]
                 new_media.last_updated = datetime.now()
                 session.add(new_media)
+        else:
+            raise ValueError(title, media_type)
         session.commit()
-
-async def add_multiple_media(titles: str, media_type: str):
-    for title in titles.split("."):
-        title = title.strip()
-        if title:
-            await add_media(title=title, media_type=media_type)
 
 def increment_chapter(media_id: int):
     with Session(engine) as session:

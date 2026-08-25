@@ -153,7 +153,7 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
                 is_this_it = True
             
         if not is_this_it:
-            return {"total_units": -1, "status": "UNKNOWN", "url": f"https://comix.to/browse?q={urllib.parse.quote_plus(title)}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"}
+            return {"total_units": -1, "status": "UNKNOWN", "url": detail_url}
         
         status = str(detail_data.get("status", "UNKNOWN")).upper()
         if "COMPLETE" in status:
