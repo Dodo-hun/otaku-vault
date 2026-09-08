@@ -11,7 +11,7 @@ import subprocess
 
 @st.cache_resource(show_spinner=False)
 def install_playwright_deps():
-    subprocess.run(["playwright", "install", "chromium"])
+    subprocess.run(["install", "chromium"])
 
 # Ez a hívás garantálja, hogy a böngésző letöltődik az első futtatáskor
 install_playwright_deps()
