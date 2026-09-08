@@ -1,11 +1,7 @@
 from curl_cffi import requests
 import json
 import urllib.parse
-from typing import Optional, Dict, Any
-from bs4 import BeautifulSoup
-from playwright.async_api import async_playwright
-from playwright_stealth import Stealth
-import json
+from typing import Dict, Any
 import re
 
 ANILIST_API_URL = "https://graphql.anilist.co"
@@ -64,54 +60,6 @@ async def fetch_media_data(search_title: str, is_manga: bool = True) -> Dict[int
                     "url": f"https://www.google.com/search?q={urllib.parse.quote_plus(search_title)}"
                     }
 
-async def auto_fetch_comix_chapter(title: str) -> dict[int, Any]:
-    # 1. A cím URL-baráttá tétele (pl. "Mad Dog" -> "Mad+Dog")
-    safe_title = urllib.parse.quote_plus(title)
-    
-    # A Comix.to hivatalos kereső URL-je
-    search_url = f"https://comix.to/browse?q={safe_title}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"
-    
-    async with Stealth().use_async(async_playwright()) as p:
-        # Chromium elindítása láthatatlan (headless) módban
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-        
-        try:
-            await page.goto(search_url)
-            await page.wait_for_selector('.lrow__poster', timeout=10)
-            soup_browse = BeautifulSoup(await page.content(), 'html.parser')
-            link_element = soup_browse.find('a', class_='lrow__poster')
-            
-            if not link_element:
-                print("Nem található manga ezzel a címmel.")
-                return {"total_units": -1, "status": "UNKNOWN", "url": ""}
-                
-            href = link_element.get('href')
-            manga_url = f"https://comix.to{href}"
-            
-            await page.goto(manga_url)
-            
-            soup_manga = BeautifulSoup(await page.content(), 'html.parser')
-            script_tag = soup_manga.find('script', id='initial-data')
-        
-            if script_tag and script_tag.string:
-                data = json.loads(script_tag.string)
-                queries = data.get("queries", {})
-                
-                for key, value_obj in queries.items():
-                    if isinstance(value_obj, dict):
-                        latest_chapter = value_obj.get("latestChapter")
-                        if latest_chapter is not None:
-                            chapters = int(float(latest_chapter))
-                            status = str(value_obj.get("status", "UNKNOWN")).upper()
-                        return {"total_units": chapters, "status": status, "url": manga_url}
-            return {"total_units": -1, "status": "UNKNOWN", "url": ""}
-
-        except Exception as e:
-            raise e
-        finally:
-            await browser.close()
-    return {"total_units": -1, "status": "UNKNOWN", "url": ""}
 
 async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
     try:
