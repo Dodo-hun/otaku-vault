@@ -17,7 +17,7 @@ def install_playwright_deps():
 install_playwright_deps()
 
 types = ["Manga", "Anime"]
-statuses = ["RELEASING", "ONGOING", "FINISHED", "COMPLETE", "CANCELLED", "HIATUS", "UNKNOWN", "DISCONTINUED", "DROPPED"]
+statuses = ["RELEASING", "ONGOING", "FINISHED", "COMPLETE", "CANCELLED", "HIATUS", "UNKNOWN", "DISCONTINUED", "DROPPED", "NONE"]
 
 # 3. Streamlit UI
 async def main():
