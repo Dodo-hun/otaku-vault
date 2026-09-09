@@ -120,7 +120,11 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
         
         chapters = detail_data.get("latest_chapter",-1)
         try:
-            ch_from_status = int(str(detail_data.get("status", "0")).split()[0])
+            ch_from_status = str(detail_data.get("status", "0")).split()[0]
+            if ch_from_status.isdigit():
+                ch_from_status = int(ch_from_status)
+            else:
+                ch_from_status = int(str(detail_data.get("status", "0")).split()[1])
             if chapters < ch_from_status:
                 chapters = ch_from_status
         except:
