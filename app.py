@@ -1,20 +1,7 @@
 import asyncio
 import streamlit as st
-from sqlmodel import Field, SQLModel, create_engine, Session, select
-import requests
-from datetime import datetime
-from typing import Optional
+from sqlmodel import Session, select
 from database import *
-from PIL import Image
-import pytesseract
-import subprocess
-
-@st.cache_resource(show_spinner=False)
-def install_playwright_deps():
-    subprocess.run(["install", "chromium"])
-
-# Ez a hívás garantálja, hogy a böngésző letöltődik az első futtatáskor
-install_playwright_deps()
 
 types = ["Manga", "Anime"]
 statuses = ["RELEASING", "ONGOING", "FINISHED", "COMPLETE", "CANCELLED", "HIATUS", "UNKNOWN", "DISCONTINUED", "DROPPED", "NONE"]
@@ -27,16 +14,7 @@ async def main():
     # Adatbázis táblák létrehozása, ha még nem léteznek
     create_db_and_tables()
     
-    uploaded_file = st.file_uploader("Upload Image",type=["jpg", "jpeg", "png"])
     text = ""
-    if uploaded_file is not None:
-        image = Image.open(uploaded_file)
-        st.image(image, caption='Feltöltött kép')
-        try:
-            # Kép szöveggé alakítása
-            text = pytesseract.image_to_string(image, lang='hun+eng')
-        except Exception as e:
-            st.error("Hiba történt a szövegfelismerés során. Ellenőrizd, hogy a Tesseract telepítve van-e.")
 
     # Teszt adat hozzáadása UI (Később ezt lecseréljük rendes formra)
     with st.expander("New Media"):

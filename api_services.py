@@ -38,23 +38,26 @@ async def fetch_media_data(search_title: str, is_manga: bool = True) -> Dict[int
             response = requests.post(
                 ANILIST_API_URL, 
                 json={'query': query, 'variables': variables},
-                timeout=10
+                timeout=100
             )
+            print("problem")
             response.raise_for_status()
             data = response.json()
-
+            print(data)
             media = data.get("data", {}).get("Media")
             if not media:
                 return {"total_units": -1, "status": "UNKNOWN", "url": f"https://www.google.com/search?q={urllib.parse.quote_plus(search_title)}"}
-
+            print(media)
             return {
                 "total_units": media.get("episodes") or 0,
                 "status": media["status"],
                 "url": f"https://www.google.com/search?q={urllib.parse.quote_plus(search_title)}"
             }
 
-        except requests.exceptions.RequestException:
+        except requests.exceptions.RequestException as e:
+            print(e.response.text if e.response else str(e))
             return {
+                
                     "total_units": -1,
                     "status": "UNKNOWN",
                     "url": f"https://www.google.com/search?q={urllib.parse.quote_plus(search_title)}"
