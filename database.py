@@ -1,6 +1,6 @@
 import streamlit as st
 from sqlmodel import Field, SQLModel, create_engine, Session, select
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 from api_services import *
 

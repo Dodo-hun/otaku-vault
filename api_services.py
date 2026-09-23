@@ -1,9 +1,6 @@
 from curl_cffi import requests
-import json
 import urllib.parse
 from typing import Dict, Any
-import re
-
 ANILIST_API_URL = "https://graphql.anilist.co"
 
 async def fetch_media_data(search_title: str, is_manga: bool = True) -> Dict[int, Any]:
