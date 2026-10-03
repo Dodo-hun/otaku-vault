@@ -1,6 +1,6 @@
 import streamlit as st
 from sqlmodel import Field, SQLModel, create_engine, Session, select
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from api_services import *
 
@@ -35,7 +35,7 @@ async def add_media(title: str, media_type: str):
                 new_media.total_chapters = fetched_data["total_units"]
                 new_media.status = fetched_data["status"]
                 new_media.url = fetched_data["url"]
-                new_media.last_updated = datetime.now()
+                new_media.last_updated = datetime.now(tz= timezone.utc)
                 session.add(new_media)
         else:
             raise ValueError(title, media_type)
@@ -46,7 +46,7 @@ def increment_chapter(media_id: int):
         media = session.get(Media, media_id)
         if media:
             media.read_chapters += 1
-            media.last_updated = datetime.now()
+            media.last_updated = datetime.now(tz= timezone.utc)
             session.add(media)
         session.commit()
 
@@ -58,7 +58,7 @@ async def update_total_chapters(media_id: int):
             media.total_chapters = fetched_data["total_units"]
             media.status = fetched_data["status"]
             media.url = fetched_data["url"]
-            media.last_updated = datetime.now()
+            media.last_updated = datetime.now(tz= timezone.utc)
             session.add(media)
         session.commit()
 
@@ -72,7 +72,7 @@ def update_media(media_id: int, new_title: str, new_status: str, new_total_chapt
             media.read_chapters = new_read_chapters
             media.plusz_info = plusz_info
             media.manual_change = new_manual_change
-            media.last_updated = datetime.now()
+            media.last_updated = datetime.now(tz= timezone.utc)
             session.add(media)
             session.commit()
 
