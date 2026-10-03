@@ -64,6 +64,9 @@ async def main():
             SearchStatus = st.selectbox("Filter by status", ["All"] + statuses)
             if SearchStatus != "All":
                 results = [media for media in results if media.status == SearchStatus]
+            SearchManual = st.checkbox("Manual changers")
+            if SearchManual:
+                results = [media for media in results if media.manual_change]
             
                 
             
