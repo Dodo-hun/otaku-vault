@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 from database import *
 
 types = ["Manga", "Anime"]
-statuses = ["RELEASING", "ONGOING", "FINISHED", "COMPLETE", "CANCELLED", "HIATUS", "UNKNOWN", "DISCONTINUED", "DROPPED", "NONE"]
+statuses = ["RELEASING", "ONGOING", "FINISHED", "COMPLETE", "CANCELLED", "HIATUS", "UNKNOWN", "DISCONTINUED", "DROPPED", "NONE", "NOT_YET_RELEASED"]
 
 # 3. Streamlit UI
 async def main():
