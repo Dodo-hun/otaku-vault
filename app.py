@@ -14,32 +14,23 @@ async def main():
     # Adatbázis táblák létrehozása, ha még nem léteznek
     create_db_and_tables()
     
-    text = ""
-
-    # Teszt adat hozzáadása UI (Később ezt lecseréljük rendes formra)
-    with st.expander("New Media"):
-        stitle = st.text_input("Title", value=text)
-        smedia_type = st.selectbox("Type", types)
-        if st.button("Add"):
-            try:
-                await add_media(title=stitle, media_type=smedia_type)
-                st.success(f"Added **{stitle}** as **{smedia_type}**.")
-            except ValueError as e:
-                st.error(f"Media with title **{stitle}** and type **{smedia_type}** already exists.")
-                
-    dialog = False
-    with st.expander("Multiple Media"):
-        titles = st.text_input("Titles", value=text)
+    wrongtitles = []
+    with st.expander("New Media(s)"):
+        titles = st.text_input("Titles", value="", placeholder="For multiple media separate them with dot '.'")
         medias_type = st.selectbox("Types", types)
-        if st.button("Add all media"):
+        if st.button("Add media(s)"):
             for title in titles.split("."):
                     title = title.strip()
-                    if title and not dialog:
+                    if title:
                         try:
                             await add_media(title=title, media_type=medias_type)
                             st.success(f"Added **{title}** as **{medias_type}**.")
-                        except ValueError as e:
+                        except ValueError:
                             st.error(f"Media with title **{title}** and type **{medias_type}** already exists.")
+                        except NameError as ne:
+                            wrongtitles.append(title)
+                            st.error(f"Media not found in alternative titles as well please check for spelling errors:\n\n {"\n\n".join(ne.args[0])} \n\n {ne.args[1]}")
+            titles = "" #".".join(wrongtitles)
 
     # Adatok lekérdezése és megjelenítése
     with Session(engine) as session:
@@ -73,15 +64,16 @@ async def main():
         
         if results:
             st.subheader("Saved media:")
-            st.button("API refresh", on_click=lambda: [asyncio.run(update_total_chapters(media_id=media.id)) for media in results])
+            col1, col2 = st.columns([1,1])
+            with col1:
+                st.button("API refresh", on_click=lambda: [asyncio.run(update_total_chapters(media_id=media.id)) for media in results])
+            with col2:
+                st.link_button("Manga Updates", "https://www.mangaupdates.com")
             for media in results:
                 with st.container(border=True):
                     col1, col2 = st.columns([3,1])
                     with col1:
-                        if media.type == "Manga":
-                            st.write(f"**[{media.title}]({media.url})**  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, Plusz info: {media.plusz_info}")
-                        else:
-                            st.write(f"**[{media.title}]({media.url})**  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, Plusz info: {media.plusz_info}")
+                        st.write(f"**[{media.title}]({media.url})**  \n({media.type}) - {media.total_chapters} / {media.read_chapters} | Állapot: {media.status}, Plusz info: {media.plusz_info}")
                     with col2:
                         with st.container():
                             col1, col2, col3 = st.columns(3)

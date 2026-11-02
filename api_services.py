@@ -72,6 +72,8 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
             
         results = search_resp.json().get("results", [])
         if not results:
+            #ToDo
+            raise ValueError
             return {"total_units": -1, "status": "UNKNOWN", "url": f"https://comix.to/browse?q={urllib.parse.quote_plus(title)}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"}
         
         for result in results:
@@ -95,13 +97,15 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
         alt_titles = detail_data.get("associated", [])
         alt_titles.append({"title": detail_data.get("title", "")})
         #print(f"Alt titles: {alt_titles}")
+        clean_alt_titles = []
         for alt in alt_titles:
             alt_title = alt.get("title", "")
+            clean_alt_titles.append(alt_title)
             if alt_title.lower() == title.lower():
                 is_this_it = True
             
         if not is_this_it:
-            return {"total_units": -1, "status": "UNKNOWN", "url": detail_url}
+            raise NameError(clean_alt_titles, detail_url)
         
         status = str(detail_data.get("status", "UNKNOWN")).upper()
         if "COMPLETE" in status:
@@ -120,7 +124,7 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
         
         chapters = detail_data.get("latest_chapter",-1)
         try:
-            ch_from_status = str(detail_data.get("status", "0")).split()[0]
+            ch_from_status = str(detail_data.get("status", "0")).split()[0].strip("*.,-")
             if ch_from_status.isdigit():
                 ch_from_status = int(ch_from_status)
             else:
@@ -135,7 +139,7 @@ async def auto_fetch_mangaupdates(title: str) -> dict[int, Any]:
             #"url": detail_url
             "url": f"https://comix.to/browse?q={urllib.parse.quote_plus(title)}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"
         }
-    except Exception as e:
+    except BufferError as e:
         print(f"Hiba a MangaUpdates API lekérésekor: {e}")
         return {"total_units": -1, "status": "UNKNOWN", "url": f"https://comix.to/browse?q={urllib.parse.quote_plus(title)}&sort=relevance%3Adesc&types=manga%2Cmanhwa%2Cmanhua"}
 

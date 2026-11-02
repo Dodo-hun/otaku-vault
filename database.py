@@ -30,13 +30,17 @@ async def add_media(title: str, media_type: str):
         new_media = Media(title=title, type=media_type)
         media = session.exec(select(Media).where(Media.title == title, Media.type == media_type)).first()
         if not media:
-            fetched_data = await fetch_media_data(new_media.title, is_manga=(new_media.type == "Manga"))
-            if fetched_data:
-                new_media.total_chapters = fetched_data["total_units"]
-                new_media.status = fetched_data["status"]
-                new_media.url = fetched_data["url"]
-                new_media.last_updated = datetime.now(tz= timezone.utc)
-                session.add(new_media)
+            try:
+                fetched_data = await fetch_media_data(new_media.title, is_manga=(new_media.type == "Manga"))
+                if fetched_data:
+                    new_media.total_chapters = fetched_data["total_units"]
+                    new_media.status = fetched_data["status"]
+                    new_media.url = fetched_data["url"]
+                    new_media.last_updated = datetime.now(tz= timezone.utc)
+                    session.add(new_media)
+            except NameError as ne:
+                raise NameError(ne.args[0], ne.args[1])
+
         else:
             raise ValueError(title, media_type)
         session.commit()
