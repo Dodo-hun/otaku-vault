@@ -1,8 +1,10 @@
-import streamlit as st
+import os
+from dotenv import load_dotenv
 from sqlmodel import Field, SQLModel, create_engine, Session, select
 from datetime import datetime, timezone
 from typing import Optional
 from api_services import *
+
 
 # Adatbázis séma
 class Media(SQLModel, table=True):
@@ -18,8 +20,12 @@ class Media(SQLModel, table=True):
     url: str = Field(default="")  # Új mező az URL tárolására
     manual_change: bool = Field(default=False)
 
-cloud_url = st.secrets["DATABASE_URL"] # change this to your own database URL
-engine = create_engine(cloud_url, echo=False)
+
+load_dotenv() 
+
+database_url = os.getenv("DATABASE_URL")
+
+engine = create_engine(database_url)
 
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)

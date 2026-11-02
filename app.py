@@ -20,16 +20,16 @@ async def main():
         medias_type = st.selectbox("Types", types)
         if st.button("Add media(s)"):
             for title in titles.split("."):
-                    title = title.strip()
-                    if title:
-                        try:
-                            await add_media(title=title, media_type=medias_type)
-                            st.success(f"Added **{title}** as **{medias_type}**.")
-                        except ValueError:
-                            st.error(f"Media with title **{title}** and type **{medias_type}** already exists.")
-                        except NameError as ne:
-                            wrongtitles.append(title)
-                            st.error(f"Media not found in alternative titles as well please check for spelling errors:\n\n {"\n\n".join(ne.args[0])} \n\n {ne.args[1]}")
+                title = title.strip()
+                if title:
+                    try:
+                        await add_media(title=title, media_type=medias_type)
+                        st.success(f"Added **{title}** as **{medias_type}**.")                        
+                    except ValueError:
+                        st.error(f"Media with title **{title}** and type **{medias_type}** already exists.")
+                    except NameError as ne:
+                        wrongtitles.append(title)
+                        st.error(f"Media not found in alternative titles as well please check for spelling errors:\n\n {"\n\n".join(ne.args[0])} \n\n {ne.args[1]}")
             titles = "" #".".join(wrongtitles)
 
     # Adatok lekérdezése és megjelenítése

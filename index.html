@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Otaku Vault</title>
+</head>
+<body>
+    <h1 class="page-title">Otaku Vault</h1>
+
+    <!-- Műveleti gombok -->
+    
+    <!-- Új Média hozzáadása -->
+    <details open id="new-media-expander" class="panel panel-new-media">
+        <summary class="panel-summary">New Media(s)</summary>
+        
+        
+        <div class="input-group">
+            <label for="new-titles" class="input-label">Titles:</label>
+            <input type="text" id="new-titles" class="text-input new-media-input" placeholder="For multiple media separate them with dot '.'">
+        </div>
+        
+        <div class="input-group">
+            <label for="new-type" class="input-label">Type:</label>
+            <select id="new-type" class="select-input new-media-select">
+                
+            </select>
+        </div>
+        
+        <button id="btn-add-media" class="btn btn-success">Add media(s)</button>
+    </details>
+    <div id="feedback-container" class="feedback-area"></div> 
+    <!-- Szűrők -->
+    <details id="filters-expander" class="panel panel-filters">
+        <summary class="panel-summary">Filters</summary>
+        <div class="input-group">
+            <label for="filter-text" class="input-label">Search:</label>
+            <input type="text" id="filter-text" class="text-input filter-input" placeholder="Type to filter titles...">
+        </div>
+        <div class="input-group">
+            <label for="filter-status" class="input-label">Status:</label>
+            <select id="filter-status" class="select-input filter-select">
+            </select>
+        </div>
+    </details>
+    <div class="action-buttons-container">
+        <button id="btn-api-refresh" class="btn btn-action">API Refresh</button>
+        <a id="btn-mangaupdate" class="btn btn-action" href="https://www.mangaupdates.com" target="_blank">MangaUpdate</a>
+        <button id="btn-import" class="btn btn-disabled">Import (TODO)</button>
+        <button id="btn-export" class="btn btn-disabled">Export (TODO)</button>
+    </div>
+    
+    <div id="media-container" class="cards-container">
+
+    </div>
+    <script src="js/index.js" type="module"></script>
+</body>
+</html>

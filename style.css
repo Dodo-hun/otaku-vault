@@ -1,0 +1,156 @@
+/* style.css */
+
+/* Streamlit sötét téma színpalettája */
+:root {
+    --bg-color: #0e1117;          /* Streamlit fő háttér */
+    --secondary-bg: #262730;      /* Panelek, inputok háttere */
+    --text-color: #fafafa;        /* Fő szövegszín */
+    --border-color: rgba(250, 250, 250, 0.2); /* Finom szegélyek */
+    --primary-color: #ff4b4b;     /* Streamlit jellegzetes piros/rózsaszín akcentusa */
+    --primary-hover: #ff3333;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: "Source Sans Pro", sans-serif;
+    margin: 2rem auto;
+    max-width: 1200px;
+    padding: 0 1rem;
+    line-height: 1.5;
+}
+
+.page-title {
+    font-weight: 600;
+    margin-bottom: 2rem;
+}
+
+/* --- GOMBOK --- */
+.action-buttons-container {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+}
+
+.btn {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-disabled:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-success {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.btn-success:hover {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    color: white;
+}
+
+/* --- PANELEK (Expanderek) --- */
+.panel {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    transition: background-color 0.2s;
+}
+
+.panel:hover {
+    border-color: rgba(250, 250, 250, 0.4);
+}
+
+.panel-summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1.1rem;
+    outline: none;
+    list-style: none; /* Alapértelmezett nyíl eltüntetése néhány böngészőben */
+}
+
+/* Egyedi nyíl a summary-hez */
+.panel-summary::-webkit-details-marker {
+    display: none;
+}
+.panel-summary::before {
+    content: "▶";
+    font-size: 0.8rem;
+    display: inline-block;
+    margin-right: 0.5rem;
+    transition: transform 0.2s;
+}
+.panel[open] .panel-summary::before {
+    transform: rotate(90deg);
+}
+
+/* --- INPUTOK (Szövegmezők és legördülők) --- */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.input-label {
+    font-size: 0.9rem;
+    color: #cccccc;
+}
+
+.text-input, .select-input {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 1rem;
+    width: 100%;
+    max-width: 400px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.text-input:focus, .select-input:focus {
+    border-color: var(--primary-color);
+}
+
+/* --- KÁRTYÁK TÁROLÓJA ÉS VISSZAJELZÉSEK --- */
+.cards-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.feedback-area {
+    margin-top: 1rem;
+}
+
+/* Ideiglenes kártya stílus, amit majd a JS fog generálni */
+.media-card {
+    background-color: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
